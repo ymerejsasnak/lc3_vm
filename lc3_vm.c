@@ -14,7 +14,7 @@
 //////TEMP NOTE
 //THESE INCLUDES ALL ADDED NOW BUT NOT NEC USED YET....LOOK THEM UP, ETC
 
-// ON PART 4 NEXT
+
 
 
 // 65536 (2^16) memory locations, each can store a 16 bit value (128kb total) 
@@ -78,6 +78,90 @@ enum
 	FL_POS = 1 << 0, // positive 
 	FL_ZRO = 1 << 1, // zero     
 	FL_NEG = 1 << 2, // negative
+}
 
+
+
+//////////////////////
+/////////////////////
+////////////////////
+
+int main(int argc, const char* argv[])
+{
+	// load arguments (12)
+	// setup (12)
+	//
+	
+	// set the program counter to its starting position
+	// 0x3000 is the default
+	enum { PC_START = 0x3000 };
+	reg[R_PC] = PC_START;
 
 	
+	// then start main processing loop
+	// (load instruction at address in pc reg, inc pc reg, lookup opcode, perform instruction, loop)
+	int running = 1;
+	while (running)
+	{
+		// FETCH
+		uint16_t instr = mem_read(reg[R_PC]++);
+		uint16_t op = instr >> 12;  // shift whole instruction right 12 bits so only 4 bit opcode remains
+	
+	
+	
+		switch (op)
+		{
+			case OP_ADD:
+				
+				break;
+			case OP_AND:
+				
+				break;
+			case OP_NOT:
+				
+				break;
+			case OP_BR:
+				
+				break;
+			case OP_JMP:
+				
+				break;
+			case OP_JSR:
+				
+				break;
+			case OP_LD:
+				
+				break;
+			case OP_LDI:
+				
+				break;
+			case OP_LDR:
+				
+				break;
+			case OP_LEA:
+				
+				break;
+			case OP_ST:
+				
+				break;
+			case OP_STI:
+				
+				break;
+			case OP_STR:
+				
+				break;
+			case OP_TRAP:
+				
+				break;
+			
+			case OP_RES:
+			case OP_RTI:
+			default:
+				//bad opcode
+				break;
+		}
+	
+	}
+
+	// shutdown (12)
+}	
