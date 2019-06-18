@@ -291,37 +291,77 @@ int main(int argc, const char* argv[])
 /////////////////////////////                
                 
 			case OP_LDR:
+                // load base + offset
+                // 0110 | DR | BaseR | offset6
 				
+                uint16_t dr = (instr >> 9) & 0x7;
+                uint16_t br = (instr >> 6) & 0x7;
+                uint16_t offset = sign_extend(instr & 0x3F, 6);
+                
+                reg[dr] = mem_read(reg[br] + offset);
+                
+                update_flags(dr);
 				break;
                 
 /////////////////////////////                
                 
 			case OP_LEA:
-				
+				// load effective address
+                // 1110 | DR | PCoffset9
+                
+                uint16_t dr = (instr >> 9) & 0x7;
+                uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                
+                reg[dr] = reg[R_PC] + pc_offset;
+                
+                update_flags(dr);
 				break;
                 
 /////////////////////////////                
                 
 			case OP_ST:
+                // store
+                // 0011 | SR | PCoffset9
+                
+                uint16_t sr = (instr >> 9) & 0x7;
+                uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                
+                mem_write(reg[R_PC] + pc_offset, reg[sr]);
 				
 				break;
                 
 /////////////////////////////                
                 
 			case OP_STI:
+                // store indirect
+                // 1011 | SR |PCoffset9
+                
+                uint16_t sr = (instr >> 9) & 0x7;
+                uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+                
+                mem_write(mem_read(reg[R_PC] + pc_offset), reg[sr]);
 				
 				break;
                 
 /////////////////////////////                
                 
 			case OP_STR:
+                // store base + offset
+                // 0111 | sr | baseR | offset6
 				
+                uint16_t sr = (instr >> 9) & 0x7;
+                uint16_t br = (instr >> 6) & 0x7;
+                uint16_t offset = sign_extend(instr & 0x3F, 6);
+                mem_write(reg[br] + offset, reg[sr]);
 				break;
                 
 /////////////////////////////                
                 
 			case OP_TRAP:
+                // trap - system call (helpful stuff, i/o, etc)
+                // 1111 | 0000 | trapvect8
 				
+                
 				break;
 			
 /////////////////////////////            
