@@ -78,11 +78,24 @@ enum
 };
 
 
+/////////////////////////////////////////
+// Trap Codes
+enum
+{
+    TRAP_GETC = 0x20,   // get keyboard char input, no echo
+    TRAP_OUT = 0x21,    // output character
+    TRAP_PUTS = 0x22,   // output word string
+    TRAP_IN = 0x23,    // get keyboard char, echoed to terminal
+    TRAP_PUTSP = 0x24,  // output byte string
+    TRAP_HALT = 0x25    // end program
+};
+
 // 65536 (2^16) memory locations, each can store a 16 bit value (128kb total) 
 uint16_t memory[UINT16_MAX];
 
 // Store the registers in an array (16 bit value per register)
 uint16_t reg[R_COUNT];
+
 
 
 // sign extend function (adds 1s to missing bits to make a <16 number a 16 bit number
@@ -132,16 +145,41 @@ void update_flags(uint16_t r)
 
 int main(int argc, const char* argv[])
 {
-	// load arguments (12)
+
+    // load arguments
+	if (argc < 2)
+    {
+        // show usage string
+        printf("lc3 [image-file1] ...\n");
+        exit(2);
+    }
+
+    for (int j = 1; j < argc; ++j) 
+    {
+        if (!read_image(argv[j])) 
+        {
+            printf("failed to load image %s\n", argv[j]);
+            exit(1);
+        }
+    }
+
+
+
+
 	// setup (12)
 	//
+
+    // start with condition flag set to 0
+    update_flags(0);
+	
 	
 	// set the program counter to its starting position
 	// 0x3000 is the default
 	enum { PC_START = 0x3000 };
 	reg[R_PC] = PC_START;
 
-	
+
+    
 	// then start main processing loop
 	// (load instruction at address in pc reg, inc pc reg, lookup opcode, perform instruction, loop)
 	int running = 1;
@@ -156,7 +194,10 @@ int main(int argc, const char* argv[])
 		switch (op)
 		{
             
-			case OP_ADD:
+			case OP_ADD: // 2 modes (register or immediate)
+                // 0001 | DR (3) | SR1 (3) | 0 | 00 | SR2 (3)
+                // 0001 | DR (3) | SR1 (3) | 0 | imm5 (5)
+              
                 // get destination register         .... xxx. .... ....
 				uint16_t dr = (instr >> 9) & 0x7; 
                 // get first operand (source reg 1) .... ...x xx.. ....
@@ -364,7 +405,62 @@ int main(int argc, const char* argv[])
                 // trap - system call (helpful stuff, i/o, etc)
                 // 1111 | 0000 | trapvect8
 				
-                
+                switch (instr & 0xFF)
+                {
+                    case TRAP_GETC:
+                        // read single ASCII char into R0
+                        reg[R_R0] = (uint16_t)getchar();
+                        update_flags(R_R0);
+                        break;
+                    case TRAP_OUT:
+                        // output single character at R_R0
+                        putc((char)reg[R_R0], stdout);
+                        fflush(stdout);
+                        break;
+                    case TRAP_PUTS:
+                        //Write a string of ASCII characters to the console display.
+                        // The characters are contained in consecutive memory locations, 
+                        // one character per memory location, starting with the address specified in R0.
+                        // Writing terminates with the occurrence of x0000 in a memory location
+                        
+                        uint16_t* c = memory + reg[R_R0];  // address of mem (external from vm?) + address of r0
+                        while (*c) // until 0
+                        {
+                            putc((char)*c, stdout); // convert to char and output 
+                            ++c; // increment pointer
+                        }
+                        fflush(stdout);
+                        break;
+                    case TRAP_IN:
+                        // prompt for input
+                        printf("Enter a character: ");
+                        char c = getchar();
+                        putc(c, stdout); // echo input to terminal
+                        fflush(stdout);
+                        reg[R_R0] = (uint16_t)c;
+                        update_flags(R_R0);
+                        break;
+                    case TRAP_PUTSP:
+                        // output byte string
+                        // one char per byte (2 bytes per word)
+                        // need to swap back to big endian
+                        uint16_t* c = memory + reg[R_R0];
+                        while(*c)
+                        {
+                            char char1 = (*c) & 0xFF;
+                            putc(char1, stdout);
+                            char char2 = (*c) >> 8;
+                            if (char2) putc(char2, stdout);
+                            ++c;
+                            fflush(stdout);
+                        }
+                        break;
+                    case TRAP_HALT:
+                        puts("HALT");
+                        fflush(stdout);
+                        running = 0;
+                        break;
+                }
 				break;
 			
 /////////////////////////////            
