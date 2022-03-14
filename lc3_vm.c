@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <signal.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -17,8 +18,7 @@
 
 
 
-// 65536 (2^16) memory locations, each can store a 16 bit value (128kb total) 
-uint16_t memory[UINT16_MAX];
+
 
 
 //////////////////////////////////////////
@@ -41,9 +41,6 @@ enum
 	// number of registers total:
 	R_COUNT
 };
-
-// Store the registers in an array (16 bit value per register)
-uint16_t reg[R_COUNT];
 
 
 ////////////////////////////////////////
@@ -78,8 +75,14 @@ enum
 	FL_POS = 1 << 0, // positive   b001
 	FL_ZRO = 1 << 1, // zero       b010
 	FL_NEG = 1 << 2 // negative    b100
-}
+};
 
+
+// 65536 (2^16) memory locations, each can store a 16 bit value (128kb total) 
+uint16_t memory[UINT16_MAX];
+
+// Store the registers in an array (16 bit value per register)
+uint16_t reg[R_COUNT];
 
 
 // sign extend function (adds 1s to missing bits to make a <16 number a 16 bit number
@@ -252,7 +255,7 @@ int main(int argc, const char* argv[])
                 uint16_t flag = (instr >> 11) & 0x1;
                 if (flag) // JSR
                 {
-                    uint16_t pc_offset = sign_extend(intsr & 0x7FF, 11);
+                    uint16_t pc_offset = sign_extend(instr & 0x7FF, 11);
                     reg[R_PC] += pc_offset;
                 }
                 else // JSRR
