@@ -53,3 +53,5 @@ dkms.conf
 lc3finished.c
 .vscode/c_cpp_properties.json
 .vscode/launch.json
+lc3
+lc3notmine
